@@ -18,24 +18,8 @@ function Net.RegisterFunction(taskName: string, callback: (Player, ...any) -> an
 	functionTasks[taskName] = callback
 end
 
-function Net.RegisterEvent(eventName: string, callback: (Player, ...any) -> ())
-	eventTasks[eventName] = callback
-end
-
-function Net.FireClient(player: Player, eventName: string, ...: any)
-	re:FireClient(player, eventName, ...)
-end
-
-function Net.FireAllClients(eventName: string, ...: any)
-	re:FireAllClients(eventName, ...)
-end
-
-function Net.FireOthers(except: Player, eventName: string, ...: any)
-	for _, plr in game.Players:GetPlayers() do
-		if plr ~= except then
-			re:FireClient(plr, eventName, ...)
-		end
-	end
+function Net.RegisterEvent(taskName: string, callback: (Player, ...any) -> ())
+	eventTasks[taskName] = callback
 end
 
 rf.OnServerInvoke = function(player, taskName, ...)
@@ -43,18 +27,31 @@ rf.OnServerInvoke = function(player, taskName, ...)
 	if task then
 		return task(player, ...)
 	else
-		warn(("Unknown RF task requested: %s"):format(taskName))
+		warn(("Unknown network function requested: %s"):format(taskName))
 		return nil
 	end
 end
 
-re.OnServerEvent:Connect(function(player, eventName, ...)
-	local handler = eventTasks[eventName]
-	if handler then
-		handler(player, ...)
+re.OnServerEvent:Connect(function(player, taskName, ...)
+	local task = eventTasks[taskName]
+	if task then
+		task(player, ...)
 	else
-		warn(("Unknown RE event received: %s"):format(eventName))
+		warn(("Unknown network event received: %s"):format(taskName))
 	end
 end)
+
+function Net.RegisterService(service)
+	for key, value in pairs(service) do
+		if type(value) == "function" then
+			local taskName = service.Name .. "." .. key
+			print("Registering:", taskName)
+
+			Net.RegisterFunction(taskName, function(player, ...)
+				return value(service, player, ...)
+			end)
+		end
+	end
+end
 
 return Net
