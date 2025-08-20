@@ -5,11 +5,12 @@ type File = {
     Init: () -> (),
 }
 
-export type Service = File & {
-    ServiceId: number,
+export type Service = {
+    Name: string,
+    Shared: boolean,
 }
 
-export type Controller = File & {
+export type Controller = {
     Priority: number,
 }
 

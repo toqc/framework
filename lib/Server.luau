@@ -25,11 +25,23 @@ function Server.CreateManager(manager: {})
         assert(not started, "Can't Create Managers After Running Server.Start")
         assert(type(manager) == "table", "Manager Must be a Table")
         assert(type(manager.Name) == "string", `Manager.Name must be a string; got {type(manager.Name)}`)
-	    assert(not Server.GetManager(manager.Name), `Manager {manager.Name} already exists`)
+	    assert(not Server.GetManager(manager.Name), `Manager: {manager.Name} already exists`)
         assert(manager.Priority and type(manager.Priority) == "number", `{manager.Name} Must Have Priority that exists or is a Number.`)
     end
-    managers[math.clamp(manager.Priority,minPriority,maxPriority)][manager.Name] = manager
+    managers[math.clamp(manager.Priority,minPriority,maxPriority)][manager.Name] = manager :: Types.Manager
     return manager
+end
+
+function Server.CreateService(service: {})
+    do
+        assert(not started, "Can't Create Services After Running Server.Start")
+        assert(type(service) == "table", "Service Must be a Table")
+        assert(type(service.Name) == "string", `Manager.Name must be a string; got {type(service.Name)}`)
+        assert(not Server.GetService(service.Name), `Service: {service.Name} already exists`)
+        assert(type(service.Shared) == "boolean",`Service.Shared must be a boolean; got {type(service.Name)}` )
+    end
+    services[service.Name] = service :: Types.Service
+    return service
 end
 
 function Server.GetGameService(service: string)
@@ -46,6 +58,10 @@ end
 
 function Server.GetManager(name: string)
     return managers[name]
+end
+
+function Server.Network()
+    return framework_net
 end
 
 function Server.Start()
@@ -128,5 +144,17 @@ end
 function Server.HasStarted()
     return startedComplete
 end
+
+framework_net.RegisterFunction('FetchService',function(serviceName: string)
+    local service = Server.GetService(serviceName)
+    if not service then
+        return warn(`Service: {serviceName} Not Found.`)
+    end
+    if service.Shared == true then
+        return service
+    else
+        return warn(`Access Denied to: {serviceName}`)
+    end
+end)
 
 return Server

@@ -8,7 +8,7 @@ local framework_net = require(script.Parent.framework_net.client)
 local Client = {}
 
 local controllers: {Types.Controller} = {}
-local services: { Types.Service } = {}
+local services: {Types.Service} = {}
 
 local minPriority = 1
 local maxPriority = 9
@@ -21,13 +21,17 @@ local startedComplete = false
 local onStartedComplete = Instance.new("BindableEvent")
 
 local function fetchService(serviceName)
-    local result = framework_net.fetchService(serviceName)
+    local result = framework_net.Invoke("FetchService",serviceName)
     if result then
         table.insert(services,result)
         return result
     else
         return warn(("Service Not Found For: %s"):format(serviceName))
     end
+end
+
+function Client.Invoke(taskName: string, ...)
+    return framework_net.Invoke(taskName, ...)
 end
 
 function Client.CreateController(controller: {})
