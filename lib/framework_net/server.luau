@@ -45,8 +45,6 @@ function Net.RegisterService(service)
 	for key, value in pairs(service) do
 		if type(value) == "function" then
 			local taskName = service.Name .. "." .. key
-			print("Registering:", taskName)
-
 			Net.RegisterFunction(taskName, function(player, ...)
 				return value(service, player, ...)
 			end)

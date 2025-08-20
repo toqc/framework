@@ -26,7 +26,6 @@ function Net.FetchService(name: string)
 		end,
 	})
 
-	print(proxy)
 	return proxy
 end
 
