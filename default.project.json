@@ -1,0 +1,6 @@
+{
+	"name": "framework",
+	"tree": {
+		"$path": "lib"
+	}
+}

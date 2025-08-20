@@ -1,0 +1,145 @@
+local Types = require(script.Parent.Types)
+
+local util = script.Parent.util
+local Promise = require(util.Promise)
+
+local framework_net = require(script.Parent.framework_net.client)
+
+local Client = {}
+
+local controllers: {Types.Controller} = {}
+local services: { Types.Service } = {}
+
+local minPriority = 1
+local maxPriority = 9
+for i = 1, maxPriority do
+    controllers[i] = {}
+end
+
+local started: boolean = false
+local startedComplete = false
+local onStartedComplete = Instance.new("BindableEvent")
+
+local function fetchService(serviceName)
+    local result = framework_net.fetchService(serviceName)
+    if result then
+        table.insert(services,result)
+        return result
+    else
+        return warn(("Service Not Found For: %s"):format(serviceName))
+    end
+end
+
+function Client.CreateController(controller: {})
+
+    do
+        assert(not started, "Can't Create Controllers After Running Client.Start")
+        assert(type(controller) == "table", "Controller Must be a Table")
+        assert(type(controller.Name) == "string", `Controller.Name must be a string; got {type(controller.Name)}`)
+	    assert(not Client.GetController(controller.Name), `Controller {controller.Name} already exists`)
+        assert(controller.Priority and type(controller.Priority) == "number", `{controller.Name} Must Have Priority that exists or is a Number.`)
+    end
+
+    controllers[math.clamp(controller.Priority,minPriority,maxPriority)][controller.Name] = controller :: Types.Controller
+
+    return controller
+end
+
+function Client.GetGameService(service: string)
+    return game:GetService(service)
+end
+
+function Client.GetService(service: string)
+    if services[service] then
+        return services[service]
+    else
+        return fetchService(service)
+    end
+end
+
+function Client.GetController(name: string)
+    return controllers[name]
+end
+
+function Client.Start()
+    if started then
+        warn("Client Framework Already Started.")
+        return
+    end
+
+    started = true
+
+    for _, prioBucket in controllers do
+        if type(prioBucket) == "table" then
+            table.freeze(prioBucket)
+        end
+    end
+
+    return Promise.new(function(resolve)
+        local initPromises = {}
+
+        for priority = minPriority, maxPriority do
+            local bucket = controllers[priority]
+            if bucket then
+                for _, c in bucket do
+                    if type(c.Init) == "function" then
+                        table.insert(initPromises, Promise.new(function(r)
+                            debug.setmemorycategory(c.Name)
+                            c:Init()
+                            r()
+                        end))
+                    end
+                end
+            end
+        end
+
+        resolve(Promise.all(initPromises))
+    end):andThen(function()
+        for priority = minPriority, maxPriority do
+            local bucket = controllers[priority]
+            if bucket then
+                for _, m in bucket do
+                    if type(m.Start) == "function" then
+                        task.spawn(function()
+                            debug.setmemorycategory(m.Name)
+                            m:Start()
+                        end)
+                    end
+                end
+            end
+        end
+
+        local flatControllers = {}
+        for _, bucket in controllers do
+            for name, m in bucket do
+                flatControllers[name] = m
+            end
+        end
+        controllers = flatControllers
+        table.freeze(controllers)
+
+        startedComplete = true
+        onStartedComplete:Fire()
+        task.defer(function()
+            onStartedComplete:Destroy()
+        end)
+    end)
+end
+
+function Client.OnStart()
+    if startedComplete then
+        return Promise.resolve()
+    else
+        return Promise.fromEvent(onStartedComplete.Event)
+    end
+end
+
+function Client.IsStarting()
+    return started and not startedComplete
+end
+
+function Client.HasStarted()
+    return startedComplete
+end
+
+return Client
