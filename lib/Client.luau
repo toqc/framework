@@ -42,6 +42,10 @@ local function fetchService(serviceName)
 	end
 end
 
+function Client.Fire(eventType: string, taskName: string, ...)
+	framework_net.Fire(eventType, taskName, ...)
+end
+
 function Client.Invoke(taskName: string, ...)
 	return framework_net.Invoke(taskName, ...)
 end

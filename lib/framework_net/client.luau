@@ -3,11 +3,23 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local rf: RemoteFunction = ReplicatedStorage:WaitForChild("framework_rf")
 local re: RemoteEvent = ReplicatedStorage:WaitForChild("framework_re")
+local ure: UnreliableRemoteEvent = ReplicatedStorage:WaitForChild("framework_ure")
 
 local Net = {}
 
-function Net.Fire(taskName, ...): nil
-	re:FireServer(taskName, ...)
+function Net.Fire(eventType: "Reliable" | "Unreliable", taskName, ...): nil
+	if type(eventType) ~= "string" then
+		return warn(`{type(eventType)} Recieved Expeceted string`)
+	end
+
+	if eventType == "Reliable" then
+		re:FireServer(taskName, ...)
+	elseif eventType == "Unreliable" then
+		ure:FireServer(taskName, ...)
+	else
+		return warn(`eventType Must be Reliable or Unreliable, Recieved: {eventType}`)
+	end
+
 	return nil
 end
 
