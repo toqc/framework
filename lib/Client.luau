@@ -42,7 +42,7 @@ local function fetchService(serviceName)
 	end
 end
 
-function Client.Fire(eventType: string, taskName: string, ...)
+function Client.Fire(eventType: "Reliable" | "Unreliable", taskName: string, ...)
 	framework_net.Fire(eventType, taskName, ...)
 end
 
