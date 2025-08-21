@@ -42,12 +42,8 @@ local function fetchService(serviceName)
 	end
 end
 
-function Client.Fire(eventType: "Reliable" | "Unreliable", taskName: string, ...)
-	framework_net.Fire(eventType, taskName, ...)
-end
-
-function Client.Invoke(taskName: string, ...)
-	return framework_net.Invoke(taskName, ...)
+function Client.Network()
+	return framework_net
 end
 
 function Client.CreateController(controller: {})
