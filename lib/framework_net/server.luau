@@ -1,5 +1,6 @@
 -- framework_net/server.lua
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local rf = Instance.new("RemoteFunction")
 rf.Name = "framework_rf"
@@ -18,6 +19,54 @@ local eventTasks = {}
 local unreliable_events_Tasks = {}
 
 local Net = {}
+
+function Net.FireAllExcept(exceptPlayer: Player, eventType: string, taskName: string, ...: any)
+	for _, player in Players:GetPlayers() do
+		if player ~= exceptPlayer then
+			if type(eventType) ~= "string" then
+				return warn(`{type(eventType)} Recieved Expeceted string`)
+			end
+
+			if eventType == "Reliable" then
+				re:FireClient(taskName, ...)
+			elseif eventType == "Unreliable" then
+				ure:FireClient(taskName, ...)
+			else
+				return warn(`eventType Must be Reliable or Unreliable, Recieved: {eventType}`)
+			end
+		end
+	end
+end
+
+function Net.FireAll(eventType: string, taskName: string, ...: any)
+	if type(eventType) ~= "string" then
+		return warn(`{type(eventType)} Recieved Expeceted string`)
+	end
+
+	if eventType == "Reliable" then
+		re:FireAllClients(taskName, ...)
+	elseif eventType == "Unreliable" then
+		ure:FireAllClients(taskName, ...)
+	else
+		return warn(`eventType Must be Reliable or Unreliable, Recieved: {eventType}`)
+	end
+
+	return nil
+end
+
+function Net.Fire(player: Player, eventType: string, taskName: string, ...: any)
+	if type(eventType) ~= "string" then
+		return warn(`{type(eventType)} Recieved Expeceted string`)
+	end
+
+	if eventType == "Reliable" then
+		re:FireClient(player, taskName, ...)
+	elseif eventType == "Unreliable" then
+		ure:FireClient(player, taskName, ...)
+	else
+		return warn(`eventType Must be Reliable or Unreliable, Recieved: {eventType}`)
+	end
+end
 
 function Net.RegisterFunction(taskName: string, callback: (Player, ...any) -> any)
 	functionTasks[taskName] = callback

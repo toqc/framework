@@ -5,6 +5,9 @@ local rf: RemoteFunction = ReplicatedStorage:WaitForChild("framework_rf")
 local re: RemoteEvent = ReplicatedStorage:WaitForChild("framework_re")
 local ure: UnreliableRemoteEvent = ReplicatedStorage:WaitForChild("framework_ure")
 
+local eventTasks = {}
+local unreliable_events_Tasks = {}
+
 local Net = {}
 
 function Net.Fire(eventType: "Reliable" | "Unreliable", taskName, ...): nil
@@ -40,5 +43,45 @@ function Net.FetchService(name: string)
 
 	return proxy
 end
+
+function Net.RegisterEvent(taskName: string, callback: (...any) -> ())
+	if eventTasks[taskName] then
+		table.insert(eventTasks[taskName], callback)
+	else
+		eventTasks[taskName] = {}
+		table.insert(eventTasks[taskName], callback)
+	end
+end
+
+function Net.RegisterUnreliableEvent(taskName: string, callback: (...any) -> ())
+	if unreliable_events_Tasks[taskName] then
+		table.insert(eventTasks[taskName], callback)
+	else
+		unreliable_events_Tasks[taskName] = {}
+		table.insert(unreliable_events_Tasks[taskName], callback)
+	end
+end
+
+re.OnClientEvent:Connect(function(taskName, ...)
+	local task = eventTasks[taskName]
+	if task then
+		for _, f in task do
+			f(...)
+		end
+	else
+		warn(("Unknown network event received: %s"):format(taskName))
+	end
+end)
+
+ure.OnClientEvent:Connect(function(taskName, ...)
+	local task = unreliable_events_Tasks[taskName]
+	if task then
+		for _, f in task do
+			f(...)
+		end
+	else
+		warn(("Unknown network unreliable_event received: %s"):format(taskName))
+	end
+end)
 
 return Net
