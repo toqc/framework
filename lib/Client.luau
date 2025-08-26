@@ -1,6 +1,6 @@
 local Types = require(script.Parent.Types)
 
-local util = script.Parent.framework_net
+local util = script.Parent.framework_util
 local Promise = require(util.Promise)
 
 local framework_net = require(script.Parent.framework_net.client)
