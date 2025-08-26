@@ -1,6 +1,6 @@
 local Types = require(script.Parent.Types)
 
-local util = script.Parent.util
+local util = script.Parent.framework_net
 local Promise = require(util.Promise)
 
 local framework_net = require(script.Parent.framework_net.client)
@@ -9,6 +9,8 @@ local Client = {}
 
 local controllers: { Types.Controller } = {}
 local services: { Types.Service } = {}
+local utilities: { Types.Utility } | nil = {}
+local data: { Types.Data } | nil = {}
 
 local minPriority = 1
 local maxPriority = 9
@@ -46,6 +48,24 @@ function Client.Network()
 	return framework_net
 end
 
+function Client.CreateShared(Folder: Folder)
+	local newFolder = Folder:Clone()
+	newFolder.Parent = script
+
+	if newFolder:FindFirstChild("Utility") then
+		for _, module in newFolder:GetChildren() do
+			if not module:IsA("ModuleScript") then continue end
+			utilities[module.Name] = require(module)
+		end
+	end
+	if newFolder:FindFirstChild("Data") then
+		for _, module in newFolder:GetChildren() do
+			if not module:IsA("ModuleScript") then continue end
+			data[module.Name] = require(module)
+		end
+	end
+end
+
 function Client.CreateController(controller: {})
 	do
 		assert(not started, "Can't Create Controllers After Running Client.Start")
@@ -66,6 +86,28 @@ end
 
 function Client.GetGameService(service: string)
 	return game:GetService(service)
+end
+
+function Client.GetData(DataType: string)
+	assert(type(DataType) == "string", `Expected [STRING] for Client.GetData got [{string.upper(type(DataType))}]`)
+	if data == nil then
+		return warn("Data Folder Wasn't Included in Shared Folder on Client Start.")
+	elseif not data[DataType] then
+		return warn(`{DataType} not Found in Data Dir.`)
+	else
+		return data[DataType]
+	end
+end
+
+function Client.GetUtility(Utility: string)
+	assert(type(Utility) == "string", `Expected [STRING] for Client.GetUtility got [{string.upper(type(Utility))}]`)
+	if utilities == nil then
+		return warn("Utility Folder Wasn't Included in Shared Folder on Client Start.")
+	elseif not utilities[Utility] then
+		return warn(`{Utility} not Found in Data Dir.`)
+	else
+		return utilities[Utility]
+	end
 end
 
 function Client.GetService(service: string)

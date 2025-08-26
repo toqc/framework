@@ -1,6 +1,6 @@
 local Types = require(script.Parent.Types)
 
-local util = script.Parent.util
+local util = script.Parent.framework_net
 local Promise = require(util.Promise)
 
 local framework_net = require(script.Parent.framework_net.server)
@@ -9,6 +9,8 @@ local Server = {}
 
 local managers: { Types.Manager } = {}
 local services: { Types.Service } = {}
+local utilities: { Types.Utility } | nil = {}
+local data: { Types.Data } | nil = {}
 
 local minPriority = 1
 local maxPriority = 9
@@ -19,6 +21,28 @@ end
 local started = false
 local startedComplete = false
 local onStartedComplete = Instance.new("BindableEvent")
+
+function Server.Network()
+	return framework_net
+end
+
+function Server.CreateShared(Folder: Folder)
+	local newFolder = Folder:Clone()
+	newFolder.Parent = script
+
+	if newFolder:FindFirstChild("Utility") then
+		for _, module in newFolder:GetChildren() do
+			if not module:IsA("ModuleScript") then continue end
+			utilities[module.Name] = require(module)
+		end
+	end
+	if newFolder:FindFirstChild("Data") then
+		for _, module in newFolder:GetChildren() do
+			if not module:IsA("ModuleScript") then continue end
+			data[module.Name] = require(module)
+		end
+	end
+end
 
 function Server.CreateManager(manager: {})
 	do
@@ -56,6 +80,28 @@ function Server.GetGameService(service: string)
 	return game:GetService(service)
 end
 
+function Server.GetData(DataType: string)
+	assert(type(DataType) == "string", `Expected [STRING] for Server.GetData got [{string.upper(type(DataType))}]`)
+	if data == nil then
+		return warn("Data Folder Wasn't Included in Shared Folder on Server Start.")
+	elseif not data[DataType] then
+		return warn(`{DataType} not Found in Data Dir.`)
+	else
+		return data[DataType]
+	end
+end
+
+function Server.GetUtility(Utility: string)
+	assert(type(Utility) == "string", `Expected [STRING] for Server.GetUtility got [{string.upper(type(Utility))}]`)
+	if utilities == nil then
+		return warn("Utility Folder Wasn't Included in Shared Folder on Server Start.")
+	elseif not utilities[Utility] then
+		return warn(`{Utility} not Found in Data Dir.`)
+	else
+		return utilities[Utility]
+	end
+end
+
 function Server.GetService(service: string)
 	if services[service] then
 		return services[service]
@@ -66,10 +112,6 @@ end
 
 function Server.GetManager(name: string)
 	return managers[name]
-end
-
-function Server.Network()
-	return framework_net
 end
 
 function Server.Start()

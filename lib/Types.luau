@@ -18,4 +18,8 @@ export type Manager = File & {
 	Priority: number,
 }
 
+export type Utility = {any: any}
+
+export type Data = {any: any}
+
 return nil
