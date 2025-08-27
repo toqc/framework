@@ -48,6 +48,14 @@ function Client.Network()
 	return framework_net
 end
 
+function Client.AddUtility(name: string, utility: {}): Types.Utility
+	do
+		assert(not started, "Can't Add Utility After Running Client.Start")
+		assert(type(utility) == "table", "Utility Must be a Table")
+	end
+	utilities[name] = utility
+end
+
 function Client.CreateShared(Folder: Folder)
 	local newFolder = Folder:Clone()
 	newFolder.Parent = script
