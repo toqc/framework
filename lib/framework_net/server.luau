@@ -15,8 +15,8 @@ ure.Name = "framework_ure"
 ure.Parent = ReplicatedStorage
 
 local functionTasks = {}
-local eventTasks = {}
-local unreliable_events_Tasks = {}
+local event_tasks = {}
+local unreliable_events_tasks = {}
 
 local Net = {}
 
@@ -28,9 +28,9 @@ function Net.FireAllExcept(exceptPlayer: Player, eventType: string, taskName: st
 			end
 
 			if eventType == "Reliable" then
-				re:FireClient(taskName, ...)
+				re:FireClient(player, taskName, ...)
 			elseif eventType == "Unreliable" then
-				ure:FireClient(taskName, ...)
+				ure:FireClient(player, taskName, ...)
 			else
 				return warn(`eventType Must be Reliable or Unreliable, Recieved: {eventType}`)
 			end
@@ -73,20 +73,20 @@ function Net.RegisterFunction(taskName: string, callback: (Player, ...any) -> an
 end
 
 function Net.RegisterEvent(taskName: string, callback: (Player, ...any) -> ())
-	if eventTasks[taskName] then
-		table.insert(eventTasks[taskName], callback)
+	if event_tasks[taskName] then
+		table.insert(event_tasks[taskName], callback)
 	else
-		eventTasks[taskName] = {}
-		table.insert(eventTasks[taskName], callback)
+		event_tasks[taskName] = {}
+		table.insert(event_tasks[taskName], callback)
 	end
 end
 
 function Net.RegisterUnreliableEvent(taskName: string, callback: (Player, ...any) -> ())
-	if unreliable_events_Tasks[taskName] then
-		table.insert(eventTasks[taskName], callback)
+	if unreliable_events_tasks[taskName] then
+		table.insert(unreliable_events_tasks[taskName], callback)
 	else
-		unreliable_events_Tasks[taskName] = {}
-		table.insert(unreliable_events_Tasks[taskName], callback)
+		unreliable_events_tasks[taskName] = {}
+		table.insert(unreliable_events_tasks[taskName], callback)
 	end
 end
 
@@ -101,7 +101,7 @@ rf.OnServerInvoke = function(player, taskName, ...)
 end
 
 re.OnServerEvent:Connect(function(player, taskName, ...)
-	local task = eventTasks[taskName]
+	local task = event_tasks[taskName]
 	if task then
 		for _, f in task do
 			f(player, ...)
@@ -112,7 +112,7 @@ re.OnServerEvent:Connect(function(player, taskName, ...)
 end)
 
 ure.OnServerEvent:Connect(function(player, taskName, ...)
-	local task = unreliable_events_Tasks[taskName]
+	local task = unreliable_events_tasks[taskName]
 	if task then
 		for _, f in task do
 			f(player, ...)
