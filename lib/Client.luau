@@ -61,13 +61,13 @@ function Client.CreateShared(Folder: Folder)
 	newFolder.Parent = script
 
 	if newFolder:FindFirstChild("Utility") then
-		for _, module in newFolder:GetChildren() do
+		for _, module in newFolder.Utility:GetChildren() do
 			if not module:IsA("ModuleScript") then continue end
 			utilities[module.Name] = require(module)
 		end
 	end
 	if newFolder:FindFirstChild("Data") then
-		for _, module in newFolder:GetChildren() do
+		for _, module in newFolder.Data:GetChildren() do
 			if not module:IsA("ModuleScript") then continue end
 			data[module.Name] = require(module)
 		end
